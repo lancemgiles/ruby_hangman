@@ -3,8 +3,40 @@
 require 'yaml'
 
 module Hangman
+  # module for saving, loading
+  module State
+    def save(state)
+      puts 'Save game and quit playing? (y/n)'
+      ans = gets.downcase.chomp
+      return unless ans == 'y'
+
+      File.open('save.yml', 'w') { |file| YAML.dump(state, file) }
+      abort 'Game saved.'
+    end
+
+    def load
+      puts 'Load saved game? (y/n)'
+      ans = gets.downcase.chomp[0]
+      return unless ans == 'y'
+
+      @state = YAML.load_file('save.yml', aliases: true, permitted_classes: [Hangman::Game])
+      @answer = @state[0]
+      @answer_mask = state[1]
+      @incorrect_guesses = state[2]
+      @remaining_turns = state[3]
+      update_game
+    end
+
+    def update_game
+      @state = [@answer, @answer_mask, @incorrect_guesses, @remaining_turns]
+      puts @answer_mask.join
+      puts "Incorrect guesses: #{incorrect_guesses.join}"
+    end
+  end
+
   # main game
   class Game
+    include State
     MAX_TURNS = 30
     attr_accessor :dict, :remaining_turns, :guess, :incorrect_guesses, :answer, :answer_mask, :state
 
@@ -12,23 +44,22 @@ module Hangman
       @dict = File.read('google-10000-english-no-swears.txt').split.select do |word|
         (word.length >= 5) && (word.length <= 12)
       end
-      @answer = nil
       @remaining_turns = MAX_TURNS
       @incorrect_guesses = []
       if File.exist?('save.yml')
-        puts 'Load saved game? (y/n)'
-        ans = gets.downcase.chomp[0]
-        load_game if ans == 'y'
+        self.load
+      else
+        create_secret
       end
+      @state = [@answer, @answer_mask, @incorrect_guesses, @remaining_turns]
       puts "Let's play Hangman!"
       puts "You have #{@remaining_turns} tries to guess the word."
     end
 
-    def play
-      create_secret if @answer.nil?
-      while @remaining_turns >= 0
+    def play(state)
+      while @state[3] >= 0
         puts "#{@remaining_turns} turns left."
-        self.save_game
+        self.save(state)
         if guess_word?
           @guess = gets.downcase.chomp
           if check_word?(@guess)
@@ -104,31 +135,13 @@ module Hangman
       @remaining_turns.zero?
     end
 
-    def update_game
-      puts @answer_mask.join
-      puts "Incorrect guesses: #{incorrect_guesses.join}"
-    end
-
-    def save_game
-      @state = [@answer, @answer_mask, @incorrect_guesses, @remaining_turns]
-      puts 'Save game and quit playing? (y/n)'
-      ans = gets.downcase.chomp
-      return unless ans == 'y'
     
-      File.open('save.yml', 'w') {|file| YAML.dump(self, file)}
-      abort 'Game saved.'
-    end
-
-    def load_game
-      state = YAML.safe_load('save.yml', permitted_classes: [Hangman::Game])
-      self.play
-    end
   end
 end
 
 game = Hangman::Game.new
 
-game.play
+game.play(game.state)
 # game.get_secret
 # while game.remaining_turns >= 0
 #   binding.pry
