@@ -18,23 +18,19 @@ module Hangman
     def play
       get_secret
       while @remaining_turns >= 0
-        
         if check_word(@answer_mask)
           puts "You win!"
           break
         end
-        puts "#{@answer}"
         @guess = get_guess
         if check_guess?(@guess)
-          puts "nice"
+          puts "Correct."
         elsif lose?
           puts "You lose. The answer was #{@answer.join}."
           break
         else
           puts 'Keep trying.'
         end
-        puts "#{@correct_guesses}"
-        puts "#{@answer_mask}"
         update_game
       end
     end
@@ -49,7 +45,7 @@ module Hangman
     def get_guess
       @remaining_turns -= 1
       puts "Guess a letter"
-      gets.chomp
+      gets.downcase.chomp
     end
 
     def check_guess?(g)
@@ -83,8 +79,6 @@ module Hangman
       puts "#{@remaining_turns} turns left."
     end
   end
-
-    
 end
 
 include Hangman
