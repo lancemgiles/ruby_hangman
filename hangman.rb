@@ -1,36 +1,34 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module Hangman
   # main game
   class Game
     MAX_TURNS = 30
-    attr_accessor :dict, :remaining_turns, :guess, :incorrect_guesses, :answer, :answer_mask
+    attr_accessor :dict, :remaining_turns, :guess, :incorrect_guesses, :answer, :answer_mask, :state
 
     def initialize
       @dict = File.read('google-10000-english-no-swears.txt').split.select do |word|
         (word.length >= 5) && (word.length <= 12)
       end
-      if File.exist?('save.txt')
+      @answer = nil
+      @remaining_turns = MAX_TURNS
+      @incorrect_guesses = []
+      if File.exist?('save.yml')
         puts 'Load saved game? (y/n)'
         ans = gets.downcase.chomp[0]
         load_game if ans == 'y'
-      else
-        @answer = nil
-        @remaining_turns = MAX_TURNS
-        @incorrect_guesses = []
       end
       puts "Let's play Hangman!"
-      puts "You have #{@remaining_turns}} tries to guess the word."
+      puts "You have #{@remaining_turns} tries to guess the word."
     end
 
     def play
       create_secret if @answer.nil?
       while @remaining_turns >= 0
         puts "#{@remaining_turns} turns left."
-        puts 'Save and quit? (y/n)'
-        ans = gets.downcase.chomp[0]
-        save_game if ans == 'y'
-
+        self.save_game
         if guess_word?
           @guess = gets.downcase.chomp
           if check_word?(@guess)
@@ -112,25 +110,24 @@ module Hangman
     end
 
     def save_game
-      puts 'Save game? (y/n)'
+      @state = [@answer, @answer_mask, @incorrect_guesses, @remaining_turns]
+      puts 'Save game and quit playing? (y/n)'
       ans = gets.downcase.chomp
       return unless ans == 'y'
-
-      File.write('save.txt', "#{@remaining_turns}\n #{@incorrect_guesses}\n #{@answer_mask}\n #{@answer}")
+    
+      File.open('save.yml', 'w') {|file| YAML.dump(self, file)}
       abort 'Game saved.'
     end
 
     def load_game
-      save = File.read('save.txt').split
-      @remaining_turns = save[0].to_i
-      @incorrect_guesses = save[1]
-      @answer_mask = save[2]
-      @answer = save[3]
+      state = YAML.safe_load('save.yml', permitted_classes: [Hangman::Game])
+      self.play
     end
   end
 end
 
 game = Hangman::Game.new
+
 game.play
 # game.get_secret
 # while game.remaining_turns >= 0
