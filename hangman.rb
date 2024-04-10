@@ -4,23 +4,33 @@ module Hangman
   # main game
   class Game
     MAX_TURNS = 30
-    attr_accessor :dict, :remaining_turns, :guess, :correct_guesses, :incorrect_guesses, :answer, :answer_mask
+    attr_accessor :dict, :remaining_turns, :guess, :incorrect_guesses, :answer, :answer_mask
 
     def initialize
       @dict = File.read('google-10000-english-no-swears.txt').split.select do |word|
         (word.length >= 5) && (word.length <= 12)
       end
-      @remaining_turns = MAX_TURNS
-      @correct_guesses = []
-      @incorrect_guesses = []
+      if File.exist?('save.txt')
+        puts 'Load saved game? (y/n)'
+        ans = gets.downcase.chomp[0]
+        load_game if ans == 'y'
+      else
+        @answer = nil
+        @remaining_turns = MAX_TURNS
+        @incorrect_guesses = []
+      end
       puts "Let's play Hangman!"
-      puts "You have #{MAX_TURNS + 1} tries to guess the word."
+      puts "You have #{@remaining_turns}} tries to guess the word."
     end
 
     def play
-      create_secret
+      create_secret if @answer.nil?
       while @remaining_turns >= 0
         puts "#{@remaining_turns} turns left."
+        puts 'Save and quit? (y/n)'
+        ans = gets.downcase.chomp[0]
+        save_game if ans == 'y'
+
         if guess_word?
           @guess = gets.downcase.chomp
           if check_word?(@guess)
@@ -74,7 +84,6 @@ module Hangman
 
     def check_guess?(gss)
       if @answer.any? { |c| c == gss }
-        @correct_guesses.push(gss)
         puts "There is a #{gss}"
         @answer.each_index do |i|
           if @answer[i] == gss
@@ -84,7 +93,7 @@ module Hangman
           end
         end
       else
-        @incorrect_guesses.push(g)
+        @incorrect_guesses.push(gss)
         false
       end
     end
@@ -100,6 +109,23 @@ module Hangman
     def update_game
       puts @answer_mask.join
       puts "Incorrect guesses: #{incorrect_guesses.join}"
+    end
+
+    def save_game
+      puts 'Save game? (y/n)'
+      ans = gets.downcase.chomp
+      return unless ans == 'y'
+
+      File.write('save.txt', "#{@remaining_turns}\n #{@incorrect_guesses}\n #{@answer_mask}\n #{@answer}")
+      abort 'Game saved.'
+    end
+
+    def load_game
+      save = File.read('save.txt').split
+      @remaining_turns = save[0].to_i
+      @incorrect_guesses = save[1]
+      @answer_mask = save[2]
+      @answer = save[3]
     end
   end
 end
