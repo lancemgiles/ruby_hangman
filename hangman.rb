@@ -2,7 +2,7 @@ require 'pry-byebug'
 
 module Hangman
   class Game
-    MAX_TURNS = 30
+    MAX_TURNS = 3
     attr_accessor :dict, :remaining_turns, :guess, :correct_guesses, :incorrect_guesses, :answer, :answer_mask
     def initialize
       @dict = File.read('google-10000-english-no-swears.txt').split.select do
@@ -12,7 +12,7 @@ module Hangman
       @correct_guesses = []
       @incorrect_guesses = []
       puts "Let's play Hangman!"
-      puts "You have #{MAX_TURNS} tries to guess the word."
+      puts "You have #{MAX_TURNS + 1} tries to guess the word."
     end
 
     def play
@@ -23,6 +23,13 @@ module Hangman
           if check_word?(@guess)
             puts "You win!"
             break
+          elsif lose?
+            puts "You lose. The answer was #{@answer.join}."
+            break
+          else
+            puts "Wrong!"
+            @remaining_turns -= 1
+            update_game
           end
         else
           @guess = get_guess
