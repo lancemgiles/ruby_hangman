@@ -8,6 +8,7 @@ module Hangman
       end
       @remaining_turns = MAX_TURNS
       @correct_guesses = []
+      @incorrect_guesses = []
       puts "Let's play Hangman!"
       puts "You have #{MAX_TURNS} tries to guess the word."
     end
@@ -16,7 +17,18 @@ module Hangman
       get_secret
       while @remaining_turns >= 0
         @guess = get_guess
-        check_guess(@guess)
+        if check_guess?(@guess)
+          if check_word(@correct_guesses.join)
+            puts "You win!"
+            break
+          end
+        elsif lose?
+          puts "You lose. The answer was #{@answer.join}."
+          break
+        else
+          puts 'Keep trying.'
+        end
+        update_game
       end
     end
 
@@ -24,23 +36,38 @@ module Hangman
       @answer = @dict.sample
       @answer_mask = Array.new(@answer.length){ |c| c = '_'}
       puts @answer_mask.join
+      @answer = @answer.chars
     end
 
     def get_guess
+      @remaining_turns -= 1
       puts "Guess a letter"
-      gets.chomp[0]
+      gets.chomp
     end
 
-    def check_guess(g)
-
+    def check_guess?(g)
+      if @answer.any? {|c| c == g}
+        @correct_guesses.push(g)
+        i = @answer.index('c')
+        @answer_mask[i] = g
+        true
+      else
+        @incorrect_guesses.push(g)
+        false
+      end
     end
 
     def check_word(w)
-
+      w == @answer
     end
 
-    def update_gameboard
+    def lose?
+      @remaining_turns == 0
+    end
 
+    def update_game
+      puts "#{@answer_mask.join}"
+      puts "Incorrect guesses: #{incorrect_guesses.join}"
     end
   end
 
