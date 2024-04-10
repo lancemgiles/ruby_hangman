@@ -48,8 +48,10 @@ module Hangman
     def check_guess?(g)
       if @answer.any? {|c| c == g}
         @correct_guesses.push(g)
-        i = @answer.index('c')
-        @answer_mask[i] = g
+        i = @answer.index(g)
+        self.answer_mask.each do |ch|
+          self.answer_mask[i] = g
+        end
         true
       else
         @incorrect_guesses.push(g)
