@@ -1,6 +1,8 @@
+require 'pry-byebug'
+
 module Hangman
   class Game
-    MAX_TURNS = 20
+    MAX_TURNS = 30
     attr_accessor :dict, :remaining_turns, :guess, :correct_guesses, :incorrect_guesses, :answer, :answer_mask
     def initialize
       @dict = File.read('google-10000-english-no-swears.txt').split.select do
@@ -16,18 +18,23 @@ module Hangman
     def play
       get_secret
       while @remaining_turns >= 0
+        
+        if check_word(@answer_mask)
+          puts "You win!"
+          break
+        end
+        puts "#{@answer}"
         @guess = get_guess
         if check_guess?(@guess)
-          if check_word(@correct_guesses.join)
-            puts "You win!"
-            break
-          end
+          puts "nice"
         elsif lose?
           puts "You lose. The answer was #{@answer.join}."
           break
         else
           puts 'Keep trying.'
         end
+        puts "#{@correct_guesses}"
+        puts "#{@answer_mask}"
         update_game
       end
     end
@@ -48,12 +55,14 @@ module Hangman
     def check_guess?(g)
       if @answer.any? {|c| c == g}
         @correct_guesses.push(g)
+        puts "There is a #{g}"
         @answer.each_index do |i|
           if @answer[i] == g
             self.answer_mask[i] = g
+            puts "#{@answer_mask.join}"
+            true
           end
         end
-        true
       else
         @incorrect_guesses.push(g)
         false
@@ -61,7 +70,7 @@ module Hangman
     end
 
     def check_word(w)
-      w == @answer
+      w.join == @answer.join
     end
 
     def lose?
@@ -79,4 +88,22 @@ module Hangman
 end
 
 include Hangman
-Game.new().play
+game = Game.new()
+game.play
+# game.get_secret
+# while game.remaining_turns >= 0
+#   binding.pry
+#   game.guess = game.get_guess
+#   if game.check_guess?(game.guess)
+#     if game.check_word(game.correct_guesses)
+#       puts "You win!"
+#       break
+#     end
+#   elsif game.lose?
+#     puts "You lose. The answer was #{game.answer.join}."
+#     break
+#   else
+#     puts 'Keep trying.'
+#   end
+#   game.update_game
+# end
