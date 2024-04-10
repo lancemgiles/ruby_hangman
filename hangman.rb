@@ -1,6 +1,6 @@
 module Hangman
   class Game
-    MAX_TURNS = 11
+    MAX_TURNS = 20
     attr_accessor :dict, :remaining_turns, :guess, :correct_guesses, :incorrect_guesses, :answer, :answer_mask
     def initialize
       @dict = File.read('google-10000-english-no-swears.txt').split.select do
@@ -48,9 +48,10 @@ module Hangman
     def check_guess?(g)
       if @answer.any? {|c| c == g}
         @correct_guesses.push(g)
-        i = @answer.index(g)
-        self.answer_mask.each do |ch|
-          self.answer_mask[i] = g
+        @answer.each_index do |i|
+          if @answer[i] == g
+            self.answer_mask[i] = g
+          end
         end
         true
       else
@@ -70,6 +71,7 @@ module Hangman
     def update_game
       puts "#{@answer_mask.join}"
       puts "Incorrect guesses: #{incorrect_guesses.join}"
+      puts "#{@remaining_turns} turns left."
     end
   end
 
