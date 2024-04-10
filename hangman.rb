@@ -18,20 +18,28 @@ module Hangman
     def play
       get_secret
       while @remaining_turns >= 0
-        if check_word(@answer_mask)
-          puts "You win!"
-          break
-        end
-        @guess = get_guess
-        if check_guess?(@guess)
-          puts "Correct."
-        elsif lose?
-          puts "You lose. The answer was #{@answer.join}."
-          break
+        if guess_word?
+          @guess = gets.downcase.chomp
+          if check_word?(@guess)
+            puts "You win!"
+            break
+          end
         else
-          puts 'Keep trying.'
+          @guess = get_guess
+          if check_guess?(@guess)
+            puts "Correct."
+            if check_word?(@answer_mask.join)
+              puts "You win!"
+              break
+            end
+          elsif lose?
+            puts "You lose. The answer was #{@answer.join}."
+            break
+          else
+            puts 'Keep trying.'
+          end
+          update_game
         end
-        update_game
       end
     end
 
@@ -46,6 +54,12 @@ module Hangman
       @remaining_turns -= 1
       puts "Guess a letter"
       gets.downcase.chomp[0]
+    end
+
+    def guess_word?
+      puts "Do you want to guess the word? (y/n)"
+      ans = gets.downcase.chomp
+      ans == 'y'
     end
 
     def check_guess?(g)
@@ -65,8 +79,8 @@ module Hangman
       end
     end
 
-    def check_word(w)
-      w.join == @answer.join
+    def check_word?(w)
+      w == @answer.join
     end
 
     def lose?
