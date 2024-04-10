@@ -45,7 +45,7 @@ module Hangman
     def get_guess
       @remaining_turns -= 1
       puts "Guess a letter"
-      gets.downcase.chomp
+      gets.downcase.chomp[0]
     end
 
     def check_guess?(g)
