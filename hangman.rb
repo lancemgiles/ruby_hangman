@@ -25,8 +25,6 @@ module Hangman
       @answer_mask = state[1]
       @incorrect_guesses = state[2]
       @turns = state[3]
-      puts @turns
-      puts state[3]
       update_game
     end
 
@@ -51,19 +49,23 @@ module Hangman
     attr_accessor :dict, :turns, :guess, :incorrect_guesses, :answer, :answer_mask, :state
 
     def initialize
-      @dict = File.read('google-10000-english-no-swears.txt').split.select do |word|
-        (word.length >= 5) && (word.length <= 12)
-      end
       @incorrect_guesses = []
       if File.exist?('save.yml')
         self.load
       else
+        create_dict
         create_secret
         @turns = 0
       end
       @state = [@answer, @answer_mask, @incorrect_guesses, @turns]
       puts "Let's play Hangman!"
       puts "You have #{MAX_TURNS} tries to guess the word."
+    end
+
+    def create_dict
+      @dict = File.read('google-10000-english-no-swears.txt').split.select do |word|
+        (word.length >= 5) && (word.length <= 12)
+      end
     end
 
     def play(state)
@@ -149,22 +151,4 @@ module Hangman
 end
 
 game = Hangman::Game.new
-
 game.play(game.state)
-# game.get_secret
-# while game.remaining_turns >= 0
-#   binding.pry
-#   game.guess = game.get_guess
-#   if game.check_guess?(game.guess)
-#     if game.check_word(game.correct_guesses)
-#       puts "You win!"
-#       break
-#     end
-#   elsif game.lose?
-#     puts "You lose. The answer was #{game.answer.join}."
-#     break
-#   else
-#     puts 'Keep trying.'
-#   end
-#   game.update_game
-# end
