@@ -6,6 +6,7 @@ module Hangman
   # module for saving, loading
   module State
     def save(state)
+      update_state(state)
       puts 'Save game and quit playing? (y/n)'
       ans = gets.downcase.chomp
       return unless ans == 'y'
@@ -23,43 +24,53 @@ module Hangman
       @answer = @state[0]
       @answer_mask = state[1]
       @incorrect_guesses = state[2]
-      @remaining_turns = state[3]
+      @turns = state[3]
+      puts @turns
+      puts state[3]
       update_game
     end
 
     def update_game
-      @state = [@answer, @answer_mask, @incorrect_guesses, @remaining_turns]
+      @state = [@answer, @answer_mask, @incorrect_guesses, @turns]
       puts @answer_mask.join
       puts "Incorrect guesses: #{incorrect_guesses.join}"
+    end
+
+    def update_state(state)
+      state[0] = @answer
+      state[1] = @answer_mask
+      state[2] = @incorrect_guesses
+      state[3] = @turns
     end
   end
 
   # main game
   class Game
     include State
-    MAX_TURNS = 30
-    attr_accessor :dict, :remaining_turns, :guess, :incorrect_guesses, :answer, :answer_mask, :state
+    MAX_TURNS = 12
+    attr_accessor :dict, :turns, :guess, :incorrect_guesses, :answer, :answer_mask, :state
 
     def initialize
       @dict = File.read('google-10000-english-no-swears.txt').split.select do |word|
         (word.length >= 5) && (word.length <= 12)
       end
-      @remaining_turns = MAX_TURNS
       @incorrect_guesses = []
       if File.exist?('save.yml')
         self.load
       else
         create_secret
+        @turns = 0
       end
-      @state = [@answer, @answer_mask, @incorrect_guesses, @remaining_turns]
+      @state = [@answer, @answer_mask, @incorrect_guesses, @turns]
       puts "Let's play Hangman!"
-      puts "You have #{@remaining_turns} tries to guess the word."
+      puts "You have #{MAX_TURNS} tries to guess the word."
     end
 
     def play(state)
-      while @state[3] >= 0
-        puts "#{@remaining_turns} turns left."
-        self.save(state)
+      update_state(state)
+      while @turns <= MAX_TURNS
+        puts "#{MAX_TURNS - @turns} turns left."
+        save(state)
         if guess_word?
           @guess = gets.downcase.chomp
           if check_word?(@guess)
@@ -70,7 +81,7 @@ module Hangman
             break
           else
             puts 'Wrong!'
-            @remaining_turns -= 1
+            @turns += 1
             update_game
           end
         else
@@ -100,7 +111,7 @@ module Hangman
     end
 
     def create_guess
-      @remaining_turns -= 1
+      @turns += 1
       puts 'Guess a letter'
       gets.downcase.chomp[0]
     end
@@ -132,10 +143,8 @@ module Hangman
     end
 
     def lose?
-      @remaining_turns.zero?
+      @turns == MAX_TURNS
     end
-
-    
   end
 end
 
